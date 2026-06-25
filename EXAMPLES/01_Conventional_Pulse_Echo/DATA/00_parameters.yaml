@@ -1,0 +1,32 @@
+# ==========================================
+# OPENULTRASONICS: PULSE-ECHO PARAMETERS
+# ==========================================
+
+material:
+  vp: 5950.0               # P-wave velocity (m/s)
+  vs: 3200.0               # S-wave velocity (m/s)
+  rho: 7850.0              # Density (kg/m^3)
+
+boundaries:
+  top: free                # free | absorbing
+  bottom: absorbing        # free | absorbing
+  left: absorbing          # free | absorbing
+  right: absorbing         # free | absorbing
+
+#(In pulse-echo transducer and receiver are the same, so only one transducer is defined)
+transducer:
+  f0: 2250000.0            # Frequency (Hz)
+  aperture: 0.002          # Transducer width (m)
+  center_x: 0.025          # X position
+  zs: 0.050                # Z position (placed on top surface)
+  total_factor: 1.0e9      # Source amplitude multiplier
+  apodization: "uniform"   # Options: "uniform", "gaussian"
+  
+  # --- CUSTOM SOURCE WAVELET ---
+  use_custom_source: True  # True to use custom tone burst, False for default Ricker
+  window_type: "hanning"   # Options: "hanning", "gaussian", "rectangular"
+  num_cycles: 3            # Number of cycles (2 to 5 is standard for UT)
+  
+simulation:
+  total_time: 0.000020     # Total time to record in seconds (e.g., 35 microseconds)
+  mesh_name: "steel_sdh"   # Base name for the generated mesh files
