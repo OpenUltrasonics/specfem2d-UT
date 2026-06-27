@@ -161,11 +161,11 @@ run_solver() {
 section "[1/5] Building mesh via Gmsh"
 "$PYTHON_BIN" "$SCRIPT_DIR/DATA/01_create_mesh.py"
 
-section "[2/5] Updating Par_file"
-"$PYTHON_BIN" "$SCRIPT_DIR/DATA/03_update_par_file.py"
-
-section "[3/5] Creating source, station, and custom source arrays"
+section "[2/5] Creating source, station, and custom source arrays"
 "$PYTHON_BIN" "$SCRIPT_DIR/DATA/02_create_source_station.py"
+
+section "[3/5] Updating Par_file"
+"$PYTHON_BIN" "$SCRIPT_DIR/DATA/03_update_par_file.py"
 
 section "[4/5] Running mesher  (xmeshfem2D,  np=$NPROC)"
 mkdir -p "$SCRIPT_DIR/OUTPUT_FILES"

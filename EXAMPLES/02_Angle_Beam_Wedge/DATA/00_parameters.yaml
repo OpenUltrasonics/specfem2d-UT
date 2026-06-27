@@ -51,7 +51,7 @@ receiver:
   sampling_frequency: 100.0e6         # desired output sampling rate (Hz)
 
 simulation:
-  total_time: 0.000027     # 27 microseconds
+  total_time: 0.000030     # 30 microseconds
   mesh_name: "angle_beam_wedge"
 
   # MPI parallelisation

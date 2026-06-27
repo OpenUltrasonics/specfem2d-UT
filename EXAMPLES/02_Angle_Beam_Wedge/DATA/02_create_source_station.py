@@ -83,7 +83,7 @@ source_time_function_type = 1
 source_file_name = '""'
 
 if use_custom_source:
-    source_file_name = create_custom_source_file(dt, nstep)
+    source_file_name = create_custom_source_file(dt, nstep+100)  # Extra rows to ensure full coverage
     source_time_function_type = 8
 
 # Create the spatial array ALONG THE SLANT

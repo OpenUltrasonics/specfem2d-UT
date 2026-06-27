@@ -66,12 +66,12 @@ print(f"--> Effective dt = {dt_effective:.3e} s  (output rate = {actual_freq*1e-
 # ==========================================
 # Mapping: seismotype -> SU output filename
 su_file_map = {
-    1: "Uz_file_single.su",      # displacement
+    1: "Uz_file_single_d.su",    # displacement
     2: "Uz_file_single_v.su",    # velocity
     3: "Uz_file_single_a.su",    # acceleration
     4: "Up_file_single_p.su",    # pressure
     5: "Uz_file_single_c.su",    # curl of displacement
-    6: "Uz_file_single_f.su",    # fluid potential
+    6: "Uc_file_single_c.su",    # fluid potential
 }
 
 if seismotype not in su_file_map:

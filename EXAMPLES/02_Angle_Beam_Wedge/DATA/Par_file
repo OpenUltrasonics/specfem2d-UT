@@ -154,11 +154,11 @@ seismotype                      = 4
 # every how many time steps we save the seismograms
 # (costly, do not use a very small value; if you use a very large value that is larger than the total number
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
-NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1370
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 140
 
 # set to n to reduce the sampling rate of output seismograms by a factor of n
 # defaults to 1, which means no down-sampling
-NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 137
+NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 14
 
 # so far, this option can only be used if all the receivers are in acoustic elements
 USE_TRICK_FOR_BETTER_PRESSURE   = .false.
