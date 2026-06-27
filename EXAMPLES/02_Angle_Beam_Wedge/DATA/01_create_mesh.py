@@ -99,7 +99,9 @@ except subprocess.CalledProcessError as e:
 # =====================================================================
 # 5. SPECFEM2D FORMAT CONVERSION (DYNAMIC BOUNDARIES)
 # =====================================================================
-convert_script = SPECFEM2D_DIR / "utils" / "Gmsh" / "LibGmsh2Specfem_convert_Gmsh_to_Specfem2D_official.py"
+# convert_script = SPECFEM2D_DIR / "utils" / "Gmsh" / "LibGmsh2Specfem_convert_Gmsh_to_Specfem2D_official.py"
+
+convert_script = DATA_DIR / "Gmsh2Specfem_convert.py"
 
 if not convert_script.exists():
     raise FileNotFoundError(

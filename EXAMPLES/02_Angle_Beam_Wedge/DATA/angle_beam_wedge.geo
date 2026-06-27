@@ -93,8 +93,7 @@ Physical Curve("Right")  = Curve In BoundingBox{width - eps, -eps, -eps, width +
 
 // We rename "Transducer" to "Top" so the conversion script doesn't crash.
 // SPECFEM2D will automatically treat all other unassigned outer edges as free surfaces.
-Physical Curve("Top") = {103};
-
+Physical Curve("Top") = {101, 102, 103, 104};
 // ----------------------------------------------------
 // 8. Mesh Refinement
 // ----------------------------------------------------
@@ -136,6 +135,6 @@ Mesh.RecombinationAlgorithm = 1;
 Mesh.RecombineAll = 1;
 Mesh.Algorithm = 8;
 Mesh.ElementOrder = 1;
-Mesh.SecondOrderLinear = 1;
+Mesh.SecondOrderLinear = 0;
 Mesh.MshFileVersion = 2.2;
 Mesh.Binary = 0;

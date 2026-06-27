@@ -56,7 +56,7 @@ section() { echo; echo "──────────────────�
 # BANNER
 # ─────────────────────────────────────────────────────────────────────────────
 echo "=========================================================="
-echo "    OPENULTRASONICS: CONVENTIONAL PULSE-ECHO PIPELINE     "
+echo "    OPENULTRASONICS: Angle_Beam_Wedge PIPELINE     "
 echo "=========================================================="
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -92,31 +92,57 @@ echo "  Gmsh      : $(command -v gmsh)"
 echo "  SPECFEM2D : $SPECFEM2D_DIR"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# READ NPROC FROM YAML — only used here to decide serial vs MPI
-# 03_update_par_file.py reads the YAML itself; nothing is passed from here
+# READ NPROC AND GPU FLAG FROM YAML — only used here to decide serial vs MPI
+# 03_update_par_file.py reads the YAML itself and update the par_file nothing is passed from here
 # ─────────────────────────────────────────────────────────────────────────────
-section "MPI configuration"
+section "MPI / GPU configuration"
 
-NPROC="$("$PYTHON_BIN" - <<'EOF'
+# The following Python snippet reads both simulation.mpi.nproc and
+# simulation.gpu.use_gpu. It outputs two shell variable assignments
+# that we evaluate directly.
+eval "$("$PYTHON_BIN" - <<'EOF'
 import yaml, sys
+
 with open("DATA/00_parameters.yaml") as f:
     data = yaml.safe_load(f)
+
+# --- GPU flag ---
+gpu = False
 try:
-    print(int(data["simulation"]["mpi"]["nproc"]))
+    gpu = data["simulation"]["gpu"]["use_gpu"]
 except (KeyError, TypeError):
-    print(1)
+    pass
+
+# --- MPI nproc ---
+nproc = 1
+try:
+    nproc = int(data["simulation"]["mpi"]["nproc"])
+except (KeyError, TypeError):
+    pass
+
+# --- Decide final NPROC ---
+if gpu:
+    print("NPROC=1; GPU_ACTIVE=true")
+else:
+    print(f"NPROC={nproc}; GPU_ACTIVE=false")
 EOF
 )"
 
-if [ "$NPROC" -gt 1 ]; then
-    MPIRUN="${MPIRUN:-mpirun}"
-    if ! command -v "$MPIRUN" &>/dev/null; then
-        echo "ERROR: '$MPIRUN' not found. Install OpenMPI/MPICH or set MPIRUN=srun"
-        exit 1
-    fi
-    echo "  mode  : MPI  →  $MPIRUN -np $NPROC"
+# --- User feedback ---
+if [ "$GPU_ACTIVE" = "true" ]; then
+    echo "  GPU acceleration requested (gpu.use_gpu = True)."
+    echo "  Overriding user NPROC value → forcing serial run (NPROC=1)."
 else
-    echo "  mode  : serial"
+    if [ "$NPROC" -gt 1 ]; then
+        MPIRUN="${MPIRUN:-mpirun}"
+        if ! command -v "$MPIRUN" &>/dev/null; then
+            echo "ERROR: '$MPIRUN' not found. Install OpenMPI/MPICH or set MPIRUN=srun"
+            exit 1
+        fi
+        echo "  mode  : MPI  →  $MPIRUN -np $NPROC"
+    else
+        echo "  mode  : serial"
+    fi
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -129,7 +155,6 @@ run_solver() {
         "$1"
     fi
 }
-
 # ─────────────────────────────────────────────────────────────────────────────
 # PIPELINE
 # ─────────────────────────────────────────────────────────────────────────────

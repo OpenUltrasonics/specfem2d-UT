@@ -118,8 +118,18 @@ with (DATA_DIR / "SOURCE").open("w") as f:
         f.write(f"factor = {total_factor * w:.6e}\n")
         f.write(f"vx = 0.0\nvz = 0.0\n\n")
 
+
+receiver_fraction = 0.10
+n_receivers = max(1, int(round(n_sources * receiver_fraction)))
+
+# Receiver positions – spread over the same transducer face
+s_rec = np.linspace(-aperture/2, aperture/2, n_receivers)
+x_rec = center_x + s_rec * math.cos(wedge_angle_rad)
+z_rec = center_z + s_rec * math.sin(wedge_angle_rad)
+
 with (DATA_DIR / "STATIONS").open("w") as f:
-    f.write(f"S0001     UT       {center_x:.6f}  {center_z:.6f}  0.0        0.0\n")
+    for i, (x, z) in enumerate(zip(x_rec, z_rec), 1):
+        f.write(f"S{i:04d}     UT       {x:.6f}  {z:.6f}  0.0        0.0\n")
 
 print("--> SOURCE and STATIONS text files generated.")
 # ==========================================
