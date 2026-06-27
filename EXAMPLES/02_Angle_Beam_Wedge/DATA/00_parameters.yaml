@@ -1,0 +1,56 @@
+# ==========================================
+# OPENULTRASONICS: ANGLE BEAM PARAMETERS
+# ==========================================
+
+material_specimen:
+  vp: 5950.0               # P-wave velocity (m/s)
+  vs: 3200.0               # S-wave velocity (m/s)
+  rho: 7850.0              # Density (kg/m^3)
+
+material_wedge:
+  vp: 2330.0               # Rexolite P-wave
+  vs: 1160.0               # Rexolite S-wave
+  rho: 1180.0              # Rexolite Density
+
+geometry:
+  specimen_dimensions:
+    specimen_width: 0.100  # m
+    specimen_depth: 0.050  # m
+    
+  wedge_dimensions:
+    wedge_x: 0.010         # Start position of wedge
+    wedge_y: 0.050         # Base of wedge
+    wedge_l: 0.030         # Total length of wedge base
+    wedge_angle: 30.6      # Wedge angle in degrees
+    wedge_h_toe: 0.005     # Height of the front vertical toe
+    wedge_l_flat: 0.005    # Length of the top flat section
+
+  notch_dimensions:
+    notch_x_cord: 0.0798   # Mathematically optimized for the beam path
+    notch_width: 0.0005    
+    notch_height: 0.005    
+
+boundaries:
+  top: absorbing                
+  bottom: free             
+  left: absorbing          
+  right: absorbing         
+
+transducer:
+  f0: 2250000.0            # Frequency (2.25 MHz)
+  aperture: 0.015          # Transducer element width
+  total_factor: 1.0e9      
+  apodization: "uniform"   
+  
+  use_custom_source: True  
+  window_type: "hanning"   
+  num_cycles: 3            
+  
+simulation:
+  total_time: 0.000060     # 50 microseconds
+  mesh_name: "angle_beam_wedge"
+
+  # MPI parallelisation
+  mpi:
+    # nproc: 1                  # serial
+    nproc: 8                  # number of MPI ranks 

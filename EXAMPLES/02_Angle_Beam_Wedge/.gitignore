@@ -1,0 +1,13 @@
+A_Scan_Result.png
+Preview_Input_Source.png
+Wavefield_Animation.gif
+bin/
+DATA/source_time_function.txt
+DATA/MESH
+DATA/SOURCE
+DATA/STATIONS
+test.py
+# Python cache
+**/__pycache__/
+*.pyc
+*.pyo
