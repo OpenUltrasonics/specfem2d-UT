@@ -1,0 +1,11 @@
+name: specfem2d-ut
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - numpy
+  - matplotlib
+  - pyyaml
+  - gmsh
+  - obspy
+  - pip
