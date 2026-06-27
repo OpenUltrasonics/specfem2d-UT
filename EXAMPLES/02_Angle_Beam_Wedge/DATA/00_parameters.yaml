@@ -31,10 +31,10 @@ geometry:
     notch_height: 0.005    
 
 boundaries:
-  top: absorbing                
-  bottom: free             
-  left: absorbing          
-  right: absorbing         
+  top: absorbing           # All boundaries are absorbing except the bottom which is free to allow the wedge to be in contact with the specimen     
+  bottom: free             # Bottom of teh stell block is free to allow the wedge to be in contact with the specimen
+  left: absorbing          # The left boundary is absorbing to avoid reflections from the left side of the specimen
+  right: absorbing         # The right boundary is absorbing to avoid reflections from the right side of the specimen
 
 transducer:
   f0: 2250000.0            # Frequency (2.25 MHz)
@@ -48,7 +48,7 @@ transducer:
   
 receiver:
   seismotype: 4                       # 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
-  sampling_frequency: 100.0e6          # desired output sampling rate (Hz)
+  sampling_frequency: 100.0e6         # desired output sampling rate (Hz)
 
 simulation:
   total_time: 0.000027     # 27 microseconds
