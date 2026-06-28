@@ -15,18 +15,13 @@ material_fluid:
 geometry:
 
   tank_dimensions:
-    tank_width: 0.075       # Total width of the tank (m). Script uses half for radius.
+    tank_width: 0.060       # Total width of the tank (m). Script uses half for radius.
     tank_depth: 0.050       # Total depth of the tank (m)
   
   specimen_dimensions:
     specimen_width: 0.030   # Total width of the steel specimen (m)
     specimen_depth: 0.015   # Height of the steel specimen (m)
     z_offset: 0.01          # Height the steel floats above the tank bottom (m)
-
-  notch_dimensions:
-    notch_x_cord: 0.045      
-    notch_width: 0.0005    
-    notch_height: 0.005    
 
 boundaries:
   top: "absorbing"
@@ -55,7 +50,7 @@ simulation:
   # MPI parallelisation
   mpi:
     # nproc: 1                  # serial
-    nproc: 1                    # number of MPI ranks 
+    nproc: 8                    # number of MPI ranks 
 
   gpu:
     use_gpu: False              # Set to True to enable GPU acceleration (only if you have the compiled GPU version of SPECFEM2D)

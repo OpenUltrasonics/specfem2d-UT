@@ -53,15 +53,15 @@ par_data = re.sub(r'^free_surface_file\s*=.*', f'free_surface_file              
 par_data = re.sub(r'^absorbing_surface_file\s*=.*', f'absorbing_surface_file          = ./DATA/MESH/Surf_abs_{sim_params["mesh_name"]}', par_data, flags=re.MULTILINE)
 
 
-# # Update Number of Models
-# par_data = re.sub(r'^nbmodels\s*=.*', 'nbmodels                        = 2', par_data, flags=re.MULTILINE)
-# # Model 1: WATER (acoustic) -> Physical Surface M1
-# mat1_line = (f"1 1 {mat_fluid['rho']:.1f}d0 "f"{mat_fluid['vp']:.1f}d0 "f"0 0 0 9999 9999 0 0 0 0 0 0")
-# par_data = re.sub(r'^\s*1\s+1\s+.*$',mat1_line,par_data,flags=re.MULTILINE)
+# Update Number of Models
+par_data = re.sub(r'^nbmodels\s*=.*', 'nbmodels                        = 2', par_data, flags=re.MULTILINE)
+# Model 1: WATER (acoustic) -> Physical Surface M1
+mat1_line = (f"1 1 {mat_fluid['rho']:.1f}d0 "f"{mat_fluid['vp']:.1f}d0 "f"0 0 0 9999 9999 0 0 0 0 0 0")
+par_data = re.sub(r'^\s*1\s+1\s+.*$',mat1_line,par_data,flags=re.MULTILINE)
 
-# # Model 2: STEEL (elastic) -> Physical Surface M2
-# mat2_line = (f"2 1 {mat_specimen['rho']:.1f}d0 "f"{mat_specimen['vp']:.1f}d0 "f"{mat_specimen['vs']:.1f}d0 "f"0 0 9999 9999 0 0 0 0 0 0")
-# par_data = re.sub(r'^\s*2\s+1\s+.*$',mat2_line,par_data,flags=re.MULTILINE)
+# Model 2: STEEL (elastic) -> Physical Surface M2
+mat2_line = (f"2 1 {mat_specimen['rho']:.1f}d0 "f"{mat_specimen['vp']:.1f}d0 "f"{mat_specimen['vs']:.1f}d0 "f"0 0 9999 9999 0 0 0 0 0 0")
+par_data = re.sub(r'^\s*2\s+1\s+.*$',mat2_line,par_data,flags=re.MULTILINE)
 
 # Receiver settings 
 receiver_cfg = params.get('receiver', {})
@@ -79,7 +79,7 @@ else:
 
 seismotype = int(receiver_cfg.get('seismotype', 2))
 #The nsetp_seismo has to be teh multiple of ntstep_sample
-ntstep_seismos = int(ntstep_sample * 10)
+ntstep_seismos = int(ntstep_sample * 1000)
 
 par_data = re.sub(r'^seismotype\s*=.*',f'seismotype                      = {seismotype}',par_data, flags=re.MULTILINE)
 par_data = re.sub(r'^NTSTEP_BETWEEN_OUTPUT_SEISMOS\s*=.*',f'NTSTEP_BETWEEN_OUTPUT_SEISMOS   = {ntstep_seismos}',par_data, flags=re.MULTILINE)

@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+01_create_mesh.py – Axisymmetric immersion testing mesh generator.
+Reads a Gmsh .geo template, substitutes parameters from YAML, meshes with Gmsh,
+and converts to SPECFEM2D format.
+"""
+
 import yaml
 import os
 import sys
@@ -8,19 +16,18 @@ from pathlib import Path
 from physics_utils import calculate_physics_parameters
 
 # =====================================================================
-# 1. ROBUST PATH RESOLUTION & PHYSICS
+# 1. PATH RESOLUTION & PHYSICS
 # =====================================================================
 DATA_DIR = Path(__file__).resolve().parent
 SPECFEM2D_DIR = Path(os.environ.get("SPECFEM2D_DIR", DATA_DIR.parents[2])).resolve()
 
-# Calculate the precise mesh_size based on frequencies and velocities
+# Calculate mesh size from physics
 physics = calculate_physics_parameters(DATA_DIR / "00_parameters.yaml")
 mesh_size = physics['mesh_size']
-
 print(f"--> Calculated required Base Mesh Size (lc): {mesh_size*1000:.3f} mm")
 
 # =====================================================================
-# 2. EXTRACT GEOMETRY FROM YAML
+# 2. LOAD YAML & EXTRACT GEOMETRY PARAMETERS
 # =====================================================================
 with (DATA_DIR / "00_parameters.yaml").open("r") as f:
     params = yaml.safe_load(f)
@@ -29,129 +36,72 @@ geom = params.get('geometry', {})
 tank = geom.get('tank_dimensions', {'tank_width': 0.100, 'tank_depth': 0.050})
 spec = geom.get('specimen_dimensions', {'specimen_width': 0.060, 'specimen_depth': 0.015})
 
-# In Axisymmetry, the X-axis is the radius (half the total width)
-tank_r = tank['tank_width'] / 2.0
-tank_z = tank['tank_depth']
+# In axisymmetry the X coordinate is the radius (half the total width)
+tank_radius   = tank['tank_width'] / 2.0
+tank_depth    = tank['tank_depth']
+spec_radius   = spec['specimen_width'] / 2.0
+spec_depth    = spec['specimen_depth']
+spec_z_start  = spec.get('z_offset', 0.005)      # vertical offset of specimen above tank bottom
 
-spec_r = spec['specimen_width'] / 2.0
-spec_z = spec['specimen_depth']
+# Transducer radius (starts at X=0, goes to aperture/2)
+trans_radius = params['transducer']['aperture'] / 2.0
 
-# How high the steel specimen sits above the bottom of the water tank
-# (Defaulting to 5mm if not explicitly set in YAML)
-spec_z_start = spec.get('z_offset', 0.005) 
+# PML thickness – can be moved to YAML later if desired
+pml_thickness = 0.002   # 2 mm
 
-# Transducer radius (Starts at X=0, goes to aperture/2)
-trans_r = params['transducer']['aperture'] / 2.0
-pml = 0.002 # Standard 2mm PML layer
-
+# =====================================================================
+# 3. SETUP OUTPUT PATHS
+# =====================================================================
 mesh_dir = DATA_DIR / "MESH"
 mesh_dir.mkdir(exist_ok=True)
+
 mesh_name = params['simulation']['mesh_name']
 geo_dest = mesh_dir / f"{mesh_name}.geo"
 msh_filename = mesh_dir / f"{mesh_name}.msh"
 
 # =====================================================================
-# 3. DYNAMICALLY WRITE THE .GEO FILE (No templates needed!)
+# 4. READ TEMPLATE & SUBSTITUTE PLACEHOLDERS
 # =====================================================================
-# Note: Double brackets {{ }} are used to escape Gmsh syntax in Python f-strings
-geo_content = f"""// ------------------------------------------------------------
-// DYNAMIC AXISYMMETRIC MESH
-// Generated automatically by Python from 00_parameters.yaml
-// ------------------------------------------------------------
-SetFactory("OpenCASCADE");
+template_path = DATA_DIR / "template_axisymmetric.geo"
+if not template_path.exists():
+    print(f"❌ Template file not found: {template_path}")
+    sys.exit(1)
 
-lc = {mesh_size:.6f};
-Mesh.MeshSizeMin = lc;
-Mesh.MeshSizeMax = lc;
+with open(template_path, 'r') as f:
+    template = f.read()
 
-pml = {pml:.6f};
-tol = 1e-4;
+# Dictionary of placeholder -> formatted numeric value
+replacements = {
+    '@MESH_SIZE@'          : f'{mesh_size:.6f}',
+    '@PML_THICKNESS@'      : f'{pml_thickness:.6f}',
+    '@TANK_RADIUS@'        : f'{tank_radius:.6f}',
+    '@TANK_DEPTH@'         : f'{tank_depth:.6f}',
+    '@SPECIMEN_RADIUS@'    : f'{spec_radius:.6f}',
+    '@SPECIMEN_DEPTH@'     : f'{spec_depth:.6f}',
+    '@SPECIMEN_Z_START@'   : f'{spec_z_start:.6f}',
+    '@TRANSDUCER_RADIUS@'  : f'{trans_radius:.6f}',
+}
 
-// --- Geometric Variables ---
-tank_r = {tank_r:.6f};
-tank_z = {tank_z:.6f};
-spec_r = {spec_r:.6f};
-spec_z = {spec_z:.6f};
-spec_z_start = {spec_z_start:.6f};
-trans_r = {trans_r:.6f};
+for token, value in replacements.items():
+    template = template.replace(token, value)
 
-// ---- 1. Define Domains ----
-// Steel Specimen
-Rectangle(1) = {{0, spec_z_start, 0, spec_r, spec_z}};
-
-// Fluid Main Tank
-Rectangle(2) = {{0, 0, 0, tank_r, tank_z}};
-
-// ---- 2. Define PMLs ----
-Rectangle(3) = {{0, -pml, 0, tank_r, pml}};                          // Bottom PML
-Rectangle(4) = {{tank_r, 0, 0, pml, tank_z}};                         // Right PML
-Rectangle(5) = {{trans_r, tank_z, 0, tank_r - trans_r, pml}};         // Top PML (Excludes Transducer!)
-Rectangle(6) = {{tank_r, -pml, 0, pml, pml}};                        // Bottom-Right Corner
-Rectangle(7) = {{tank_r, tank_z, 0, pml, pml}};                       // Top-Right Corner
-
-// ---- 3. Merge Everything Flawlessly ----
-BooleanFragments{{ Surface{{:}}; Delete; }}{{}}
-Coherence; 
-
-// ---- 4. Force Quadrilaterals ----
-Mesh.RecombineAll = 1;
-Mesh.Algorithm = 8; 
-Mesh.RecombinationAlgorithm = 2; 
-Mesh.SubdivisionAlgorithm = 1; 
-
-// ---- 5. Physical Materials ----
-steel[] = Surface In BoundingBox{{-tol, spec_z_start-tol, -tol, spec_r+tol, spec_z_start+spec_z+tol, tol}};
-Physical Surface("M2") = steel[];
-
-all_surfs[] = Surface{{:}};
-fluid[] = all_surfs[];
-fluid[] -= steel[];
-Physical Surface("M1") = fluid[];
-
-// ---- 6. Define PML Regions ----
-bottom_pml[] = Surface In BoundingBox{{-tol, -pml-tol, -tol, tank_r+tol, tol, tol}};
-Physical Surface("B") = bottom_pml[];
-
-right_pml[] = Surface In BoundingBox{{tank_r-tol, -tol, -tol, tank_r+pml+tol, tank_z+tol, tol}};
-Physical Surface("R") = right_pml[];
-
-top_pml[] = Surface In BoundingBox{{trans_r-tol, tank_z-tol, -tol, tank_r+tol, tank_z+pml+tol, tol}};
-Physical Surface("T") = top_pml[];
-
-br_corner[] = Surface In BoundingBox{{tank_r-tol, -pml-tol, -tol, tank_r+pml+tol, tol, tol}};
-Physical Surface("RB") = br_corner[];
-
-tr_corner[] = Surface In BoundingBox{{tank_r-tol, tank_z-tol, -tol, tank_r+pml+tol, tank_z+pml+tol, tol}};
-Physical Surface("RT") = tr_corner[];
-
-// ---- 7. Triggers for Python Converter ----
-outer_bottom[] = Curve In BoundingBox{{-tol, -pml-tol, -tol, tank_r+pml+tol, -pml+tol, tol}};
-Physical Curve("Bottom_PML") = outer_bottom[];
-
-outer_right[] = Curve In BoundingBox{{tank_r+pml-tol, -pml-tol, -tol, tank_r+pml+tol, tank_z+pml+tol, tol}};
-Physical Curve("Right_PML") = outer_right[];
-
-outer_top[] = Curve In BoundingBox{{trans_r-tol, tank_z+pml-tol, -tol, tank_r+pml+tol, tank_z+pml+tol, tol}};
-Physical Curve("Top_PML") = outer_top[];
-
-// Symmetry Axis (X=0)
-axis_lines[] = Curve In BoundingBox{{-tol, -pml-tol, -tol, tol, tank_z+pml+tol, tol}};
-Physical Curve("Axis") = axis_lines[];
-"""
-
-with geo_dest.open('w') as file:
-    file.write(geo_content)
-
-print(f"--> Successfully generated dynamic .geo file at {geo_dest}")
+# Write the filled .geo file
+with open(geo_dest, 'w') as f:
+    f.write(template)
+print(f"--> Generated .geo file from template: {geo_dest}")
 
 # =====================================================================
-# 4. GMSH MESHING
+# 5. MESH WITH GMSH
 # =====================================================================
 print(f"--> Meshing geometry via Gmsh...")
 try:
-    subprocess.run(
-        ["gmsh", geo_dest.name, "-2", "-order", "1", "-format", "msh22", "-o", msh_filename.name],
-        check=True, cwd=mesh_dir, capture_output=True, text=True
+    result = subprocess.run(
+        ["gmsh", geo_dest.name, "-2", "-order", "1", "-format", "msh22",
+         "-o", msh_filename.name],
+        check=True,
+        cwd=mesh_dir,
+        capture_output=True,
+        text=True
     )
 except subprocess.CalledProcessError as e:
     print("\n❌ GMSH FAILED:")
@@ -159,27 +109,40 @@ except subprocess.CalledProcessError as e:
     sys.exit(1)
 
 # =====================================================================
-# 5. SPECFEM2D FORMAT CONVERSION (DYNAMIC BOUNDARIES)
+# 6. CONVERT TO SPECFEM2D FORMAT
 # =====================================================================
 convert_script = DATA_DIR / "Gmsh2Specfem_convert.py"
+if not convert_script.exists():
+    print(f"❌ Converter script not found: {convert_script}")
+    sys.exit(1)
 
 print("--> Converting mesh to SPECFEM2D format...")
 
+# Boundary conditions from YAML (only Top/Bottom/Right used, Left is symmetry)
 bc_map = {'free': 'F', 'absorbing': 'A', 'pml': 'A'}
 bc_top = bc_map[params['boundaries'].get('top', 'absorbing').lower()]
 bc_bottom = bc_map[params['boundaries'].get('bottom', 'absorbing').lower()]
-bc_left = bc_map[params['boundaries'].get('left', 'absorbing').lower()]
+bc_left = bc_map[params['boundaries'].get('left', 'absorbing').lower()]   # not used but passed
 bc_right = bc_map[params['boundaries'].get('right', 'absorbing').lower()]
 
 try:
-    subprocess.run(
-        [sys.executable, str(convert_script), msh_filename.name, 
+    result = subprocess.run(
+        [sys.executable, str(convert_script), msh_filename.name,
          "-t", bc_top, "-b", bc_bottom, "-l", bc_left, "-r", bc_right],
-        check=True, cwd=mesh_dir, capture_output=True, text=True
+        check=True,
+        cwd=mesh_dir,
+        capture_output=True,
+        text=True
     )
 except subprocess.CalledProcessError as e:
     print("\n❌ CONVERSION SCRIPT FAILED:")
     print(e.stderr if e.stderr else e.stdout)
     sys.exit(1)
 
-print("✅ Complete Pipeline Successful!")
+# Print any conversion script output for logging
+if result.stdout:
+    print(result.stdout)
+if result.stderr:
+    print(result.stderr)
+
+print("✅ Mesh generation and conversion complete!")

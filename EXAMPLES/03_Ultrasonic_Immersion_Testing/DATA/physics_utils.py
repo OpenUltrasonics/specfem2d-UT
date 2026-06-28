@@ -32,8 +32,8 @@ def calculate_physics_parameters(yaml_path=SCRIPT_DIR / "00_parameters.yaml"):
     lambda_min = v_min / f_max 
     
     # For SPECFEM (Degree 4), 1 element per wavelength gives ~5 points/wavelength.
-    # We use 1.6 as a safety factor to ensure highly accurate wave shapes.
-    mesh_size = lambda_min / 1.6  
+    # We use 1.5 as a safety factor to ensure highly accurate wave shapes.
+    mesh_size = lambda_min / 1.5  
 
     # ---------------------------------------------------------
     # B. SOURCE SPATIAL DISTRIBUTION (Axisymmetry)
