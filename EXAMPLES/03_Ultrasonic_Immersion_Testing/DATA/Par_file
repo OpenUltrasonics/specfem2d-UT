@@ -5,7 +5,7 @@
 #-----------------------------------------------------------
 
 # title of job
-title                           = EXAMPLES-02_Angle_Beam_Wedge
+title                           = EXAMPLES-03_Ultrasonic_Immersion_Testing
 
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
