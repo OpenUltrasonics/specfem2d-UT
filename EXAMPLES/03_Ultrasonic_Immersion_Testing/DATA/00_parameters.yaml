@@ -1,0 +1,61 @@
+# ==========================================
+# OPENULTRASONICS: Ultrasonic_Immersion_Testing
+# ==========================================
+
+material_specimen:
+  vp: 5950.0               # P-wave velocity (m/s)
+  vs: 3200.0               # S-wave velocity (m/s)
+  rho: 7850.0              # Density (kg/m^3)
+
+material_fluid:
+  vp: 1500.0              # water P-wave velocity (m/s)
+  vs: 0.0                 # water S-wave velocity (m/s)
+  rho: 1000.0             # Water density (kg/m^3) 
+
+geometry:
+
+  tank_dimensions:
+    tank_width: 0.075       # Total width of the tank (m). Script uses half for radius.
+    tank_depth: 0.050       # Total depth of the tank (m)
+  
+  specimen_dimensions:
+    specimen_width: 0.030   # Total width of the steel specimen (m)
+    specimen_depth: 0.015   # Height of the steel specimen (m)
+    z_offset: 0.01          # Height the steel floats above the tank bottom (m)
+
+  notch_dimensions:
+    notch_x_cord: 0.045      
+    notch_width: 0.0005    
+    notch_height: 0.005    
+
+boundaries:
+  top: "absorbing"
+  bottom: "absorbing"
+  left: "free"              # X=0 is symmetry axis, so we ignore left
+  right: "absorbing"
+
+transducer:
+  f0: 1000000.0              # Frequency (1.00 MHz)
+  aperture: 0.015            # Transducer element width
+  total_factor: 1.0e9      
+  apodization: "uniform"   
+  
+  use_custom_source: False  
+  window_type: "hanning"   
+  num_cycles: 1            
+  
+receiver:
+  seismotype: 4                       # 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+  sampling_frequency: 100.0e6         # desired output sampling rate (Hz)
+
+simulation:
+  total_time: 0.000060                # 30 microseconds
+  mesh_name: "ultrasonic_immersion_testing"
+
+  # MPI parallelisation
+  mpi:
+    # nproc: 1                  # serial
+    nproc: 1                    # number of MPI ranks 
+
+  gpu:
+    use_gpu: False              # Set to True to enable GPU acceleration (only if you have the compiled GPU version of SPECFEM2D)
